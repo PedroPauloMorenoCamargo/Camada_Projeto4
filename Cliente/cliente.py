@@ -124,9 +124,10 @@ def checa_mensagem(com1,file1):
     else:
         print("Sem EOP")
         quit()
-arquivo = 'Cliente/arq/situacao1.txt'  
+arquivo = 'Cliente/arq/situacao8.txt'  
 def main():
     try:
+        
         open(arquivo, 'w').close()
         file1 = open(arquivo, "a")
         print("Iniciou o main")
@@ -171,9 +172,15 @@ def main():
                 lista_envio.pop(0)       
         #Contador
         cont = 1
+        erro = False
         while cont<= len(lista_envio):
+            #if erro ==False and cont ==3:
+                #pacote_falso = cria_pacote(info[cont-1],7,len(info),dicionario["EOP"])
+                #envia_data(lista_envio[cont-1],com1)
+                #erro = True
+            #else:
             envia_data(lista_envio[cont-1],com1)
-            file1.write(pega_data() + " /receb/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"\n")
+            file1.write(pega_data() + " /envio/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"\n")
             print(f"Envia pacote {cont}")
             timer_1 = time.time()
             timer_2 = time.time()
@@ -198,7 +205,7 @@ def main():
                 if (tempo_atual-timer_1)>5:
                     #Envia denovo a mensagem
                     envia_data(lista_envio[cont-1],com1)
-                    file1.write(pega_data() + " /receb/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"\n")
+                    file1.write(pega_data() + " /envio/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"\n")
                     #Reseta T1
                     timer_1 = time.time()  
                 if (tempo_atual-timer_2)>20:
