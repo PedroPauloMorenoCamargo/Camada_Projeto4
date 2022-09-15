@@ -24,7 +24,7 @@ from datetime import datetime
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM12"                  # Windows(variacao de)
+serialName = "COM3"                  # Windows(variacao de)
 
 
 dicionario = {
