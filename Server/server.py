@@ -26,7 +26,7 @@ from datetime import datetime
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM3"                  # Windows(variacao de)
+serialName = "COM12"                  # Windows(variacao de)
 
 
 dicionario = {
@@ -98,7 +98,7 @@ def pega_data():
     now = str(datetime.now())
     return now
 
-arquivo = 'Server/arq/situacao1.txt'  
+arquivo = 'Server/arq/situacao8.txt'  
 def main():
     try:
         open(arquivo, 'w').close()
@@ -137,6 +137,7 @@ def main():
             timer_2 = time.time()
             sem_msg3 = True
             while sem_msg3:
+                
                 tempo_atual = time.time()
                 vazio = com1.rx.getIsEmpty()
                 if vazio == False:
