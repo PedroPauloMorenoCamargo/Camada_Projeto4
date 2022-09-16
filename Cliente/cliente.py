@@ -15,7 +15,134 @@ import time
 import numpy as np
 import math
 from datetime import datetime
+from bitstring import BitArray
+# Returns XOR of 'a' and 'b'
+# (both of same length)
+def xor(a, b):
+ 
 
+    # initialize result
+
+    result = []
+ 
+
+    # Traverse all bits, if bits are
+
+    # same, then XOR is 0, else 1
+
+    for i in range(1, len(b)):
+
+        if a[i] == b[i]:
+
+            result.append('0')
+
+        else:
+
+            result.append('1')
+ 
+
+    return ''.join(result)
+ 
+def binToHexa(n):
+    
+    # convert binary to int
+    num = int(n, 2)
+      
+    # convert int to hexadecimal
+    hex_num = hex(num)
+    return(hex_num)
+# Performs Modulo-2 division
+
+def mod2div(dividend, divisor):
+ 
+
+    # Number of bits to be XORed at a time.
+
+    pick = len(divisor)
+ 
+
+    # Slicing the dividend to appropriate
+
+    # length for particular step
+
+    tmp = dividend[0 : pick]
+ 
+
+    while pick < len(dividend):
+ 
+
+        if tmp[0] == '1':
+ 
+
+            # replace the dividend by the result
+
+            # of XOR and pull 1 bit down
+
+            tmp = xor(divisor, tmp) + dividend[pick]
+ 
+
+        else:   # If leftmost bit is '0'
+
+            # If the leftmost bit of the dividend (or the
+
+            # part used in each step) is 0, the step cannot
+
+            # use the regular divisor; we need to use an
+
+            # all-0s divisor.
+
+            tmp = xor('0'*pick, tmp) + dividend[pick]
+ 
+
+        # increment pick to move further
+
+        pick += 1
+ 
+
+    # For the last n bits, we have to carry it out
+
+    # normally as increased value of pick will cause
+
+    # Index Out of Bounds.
+
+    if tmp[0] == '1':
+
+        tmp = xor(divisor, tmp)
+
+    else:
+
+        tmp = xor('0'*pick, tmp)
+ 
+
+    checkword = tmp
+
+    return checkword
+ 
+# Function used at the sender side to encode
+# data by appending remainder of modular division
+# at the end of data.
+
+def encodeData(data, key):
+ 
+
+    l_key = len(key)
+ 
+
+    # Appends n-1 zeroes at end of data
+
+    appended_data = data + '0'*(l_key-1)
+
+    remainder = mod2div(appended_data, key)
+ 
+
+    # Append remainder in the original data
+
+    codeword = data + remainder
+
+    return remainder
+
+def bitstring_to_bytes(s):
+    return int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
 # voce deverá descomentar e configurar a porta com através da qual ira fazer comunicaçao
 #   para saber a sua porta, execute no terminal :
 #   python -m serial.tools.list_ports
@@ -24,7 +151,7 @@ from datetime import datetime
 #use uma das 3 opcoes para atribuir à variável a porta usada
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM3"                  # Windows(variacao de)
+serialName = "COM4"                  # Windows(variacao de)
 
 
 dicionario = {
@@ -39,9 +166,16 @@ def cria_timeout(eop):
     return b'\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00'+eop
 def cria_pacote(payload, pacote_enviado,total_pacotes,eop):
     n_payload = int_to_byte(len(payload))
-    n_pacote = int_to_byte(pacote_enviado)
+    n_pacote = int_to_byte(pacote_enviado+1)
     n_pacotestotal = int_to_byte(total_pacotes)
-    return b'\x03\x00\x00' + n_pacotestotal + n_pacote + n_payload+b'\x00\x00\x00\x00' +payload+eop
+    data = BitArray(payload)
+    key = '{0:016b}'.format(int('0x5935',16))
+    resto = encodeData(data.bin, key)
+    print(resto)
+    resto_em_bytes = bitstring_to_bytes(resto)
+    print(resto_em_bytes)
+    resto_hexa = resto_em_bytes.hex()
+    return b'\x03\x00\x00' + n_pacotestotal + n_pacote + n_payload+b'\x00\x00'+ resto_em_bytes+payload+eop,resto_hexa
 
 def cria_handshake(id,total_pacotes,eop):
     handshake = b'\x01\x00\x00' +int_to_byte(total_pacotes)+ b'\x00' + int_to_byte(id) +b'\x00\x00\x00\x00' + eop
@@ -114,10 +248,10 @@ def checa_mensagem(com1,file1):
         tipo = tipo_header(header)
         if tipo == "Ok":
             file1.write(pega_data() + " /receb/" +"4/" +"14"+"\n")
-            return True,0
+            return True,0,header[7]
         elif tipo == "Erro":
             file1.write(pega_data() + " /receb/" +"6/" +"14"+"\n")
-            return False,header[6]
+            return False,header[6],0
         else:
             print("Comunicação Errada")
             quit()
@@ -127,7 +261,6 @@ def checa_mensagem(com1,file1):
 arquivo = 'Cliente/arq/situacao8.txt'  
 def main():
     try:
-        
         open(arquivo, 'w').close()
         file1 = open(arquivo, "a")
         print("Iniciou o main")
@@ -148,11 +281,13 @@ def main():
         info = [TxBuffer[i:i + 114] for i in range(0, len(TxBuffer), 114)]
         #Cria Lista de Envios e adiciona o Handshake
         lista_envio = [cria_handshake(7,len(info),dicionario["EOP"])]
+        lista_restos = []
         #Preenche a lista de envios com os pacotes
         for i in range(0,len(info)):
-            pacote = cria_pacote(info[i],i+1,len(info),dicionario["EOP"])
+            pacote,resto_hexa = cria_pacote(info[i],i+1,len(info),dicionario["EOP"])
+            lista_restos.append(resto_hexa)
             lista_envio.append(pacote)
-
+        print(lista_restos)
         #Variável para ver se o servidor esta ocioso
         inicia = False
         #Loop do handshake
@@ -174,14 +309,15 @@ def main():
         cont = 1
         erro = False
         while cont<= len(lista_envio):
+            print(lista_restos[cont-1])
             #if erro ==False and cont ==3:
                 #pacote_falso = cria_pacote(info[cont-1],7,len(info),dicionario["EOP"])
                 #envia_data(lista_envio[cont-1],com1)
                 #erro = True
             #else:
             envia_data(lista_envio[cont-1],com1)
-            file1.write(pega_data() + " /envio/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"\n")
-            print(f"Envia pacote {cont}")
+            print(f"envia {cont}")
+            file1.write(pega_data() + " /envio/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"/"+ lista_restos[cont-1]+"\n")
             timer_1 = time.time()
             timer_2 = time.time()
             #
@@ -192,20 +328,20 @@ def main():
                 vazio = com1.rx.getIsEmpty()
                 if vazio == False:
                     #Checa se a mensagem é do tipo 4 e se n for o número para corrigir o envio do pacote
-                    tipo_4,corrige = checa_mensagem(com1,file1)
+                    tipo_4,corrige,atualiza = checa_mensagem(com1,file1)
                     #Indica que recebeu mensagem e fecha o loop
                     sem_mensagem = False
                     #Checa se tipo 4
                     if tipo_4:
-                        print(f"pacote {cont} Ok")
-                        cont +=1
+                        cont = (atualiza +1)
+                        print(cont)
                     else:
-                        print(f"Tem que corrigir para pacote {corrige}")
+                        print(f"corrige{corrige}")
                         cont = corrige
                 if (tempo_atual-timer_1)>5:
                     #Envia denovo a mensagem
                     envia_data(lista_envio[cont-1],com1)
-                    file1.write(pega_data() + " /envio/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"\n")
+                    file1.write(pega_data() + " /envio/" +"3/" +str(len(lista_envio[cont-1]))+"/"+ str(lista_envio[cont-1][4])+ "/"+str(lista_envio[cont-1][3])+"/"+ lista_restos[cont-1]+"\n")
                     #Reseta T1
                     timer_1 = time.time()  
                 if (tempo_atual-timer_2)>20:
