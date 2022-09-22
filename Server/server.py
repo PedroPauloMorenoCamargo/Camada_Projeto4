@@ -41,15 +41,6 @@ def xor(a, b):
  
 
     return ''.join(result)
- 
-def binToHexa(n):
-    
-    # convert binary to int
-    num = int(n, 2)
-      
-    # convert int to hexadecimal
-    hex_num = hex(num)
-    return(hex_num)
 # Performs Modulo-2 division
 
 def mod2div(dividend, divisor):
