@@ -42,15 +42,7 @@ def xor(a, b):
  
 
     return ''.join(result)
- 
-def binToHexa(n):
-    
-    # convert binary to int
-    num = int(n, 2)
-      
-    # convert int to hexadecimal
-    hex_num = hex(num)
-    return(hex_num)
+
 # Performs Modulo-2 division
 
 def mod2div(dividend, divisor):
@@ -166,7 +158,7 @@ def cria_timeout(eop):
     return b'\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00'+eop
 def cria_pacote(payload, pacote_enviado,total_pacotes,eop):
     n_payload = int_to_byte(len(payload))
-    n_pacote = int_to_byte(pacote_enviado+1)
+    n_pacote = int_to_byte(pacote_enviado)
     n_pacotestotal = int_to_byte(total_pacotes)
     data = BitArray(payload)
     key = '{0:016b}'.format(int('0x5935',16))
