@@ -1,13 +1,8 @@
-# Camada_Projeto4
-Datagrama
+# Projeto Camada 4 – UART Communication
 
-#Bibliografia
+This project implements a UART (Universal Asynchronous Receiver-Transmitter) communication protocol between a **server** and a **client** using **Python**.
 
-Código e funções para a dvisão do crc:
+## 📡 Overview
 
--https://www.geeksforgeeks.org/modulo-2-binary-division/
-
--https://stackoverflow.com/questions/32675679/convert-binary-string-to-bytearray-in-python-3
-
--
+The objective is to simulate serial communication between two endpoints, following the structure of a simplified data link layer protocol.
 
